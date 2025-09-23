@@ -104,7 +104,9 @@ impl Mmap {
 
     #[inline]
     pub fn len(&self) -> usize {
-        unsafe { (*self.memory.as_ptr()).len() }
+        // Read the slice length from pointer metadata; no deref, no implicit auto-ref.
+        unsafe { (&*self.memory.as_ptr()).len() }
+
     }
 
     pub unsafe fn make_executable(
@@ -149,7 +151,8 @@ impl Drop for Mmap {
     fn drop(&mut self) {
         unsafe {
             let ptr = self.memory.as_ptr().cast();
-            let len = (*self.memory.as_ptr()).len();
+            // Same rationale as above: use slice metadata, avoid creating a reference.
+            let len = (&*self.memory.as_ptr()).len();
             if len == 0 {
                 return;
             }
